@@ -242,6 +242,27 @@ var S = {
   legalNotes:'',gdpr1:false,gdpr2:'',sig1:'',sig2:'',subDate:''
 };
 
+// ── Check for registration data in URL (for Marie's email link) ──────────
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var reg = params.get('reg');
+  if (reg) {
+    try {
+      var data = JSON.parse(decodeURIComponent(escape(atob(reg))));
+      // Restore all state from URL data
+      Object.keys(data).forEach(function(k) { if (k in S) S[k] = data[k]; });
+      // Show the PDF immediately
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          openPDF();
+        }, 500);
+      });
+    } catch(e) {
+      console.error('Could not decode registration data:', e);
+    }
+  }
+})();
+
 // ── Auto-save to localStorage ─────────────────────────────────────────────
 function saveLocal() {
   try { localStorage.setItem('cas_reg', JSON.stringify(S)); } catch(e) {}
@@ -676,6 +697,26 @@ function submitForm() {
   var summary = buildSummary();
   logToSheet();
 
+  // Build a data URL that encodes all form data so Marie can open the PDF
+  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify({
+    childName:S.childName, childDob:S.childDob, childAddr:S.childAddr, otherChildren:S.otherChildren,
+    cls:S.cls, days:S.days, rate:S.rate, costDay:S.costDay, costWeek:S.costWeek, startDate:S.startDate,
+    pg1Name:S.pg1Name, pg1Rel:S.pg1Rel, pg1Home:S.pg1Home, pg1Work:S.pg1Work, pg1Mob:S.pg1Mob, pg1Email:S.pg1Email, pg1Addr:S.pg1Addr,
+    pg2Name:S.pg2Name, pg2Rel:S.pg2Rel, pg2Home:S.pg2Home, pg2Work:S.pg2Work, pg2Mob:S.pg2Mob, pg2Email:S.pg2Email, pg2Addr:S.pg2Addr,
+    ecName:S.ecName, ecAddr:S.ecAddr, ecHome:S.ecHome, ecWork:S.ecWork, ecMob:S.ecMob,
+    drName:S.drName, drTel:S.drTel, drAddr:S.drAddr, medHistory:S.medHistory,
+    allergyYn:S.allergyYn, allergyWhat:S.allergyWhat, allergyReaction:S.allergyReaction, allergyAction:S.allergyAction,
+    allergyMed:S.allergyMed, allergyControl:S.allergyControl, allergyOther:S.allergyOther,
+    medChildName:S.medChildName, medConsent:S.medConsent, febrileAllergy:S.febrileAllergy, febrileConsent:S.febrileConsent,
+    perms:S.perms,
+    collectChild:S.collectChild, cp1Name:S.cp1Name, cp1Rel:S.cp1Rel, cp1Mob:S.cp1Mob, cp1Home:S.cp1Home, cp1Addr:S.cp1Addr,
+    cp2Name:S.cp2Name, cp2Rel:S.cp2Rel, cp2Mob:S.cp2Mob, cp2Home:S.cp2Home, cp2Addr:S.cp2Addr,
+    cp3Name:S.cp3Name, cp3Rel:S.cp3Rel, cp3Mob:S.cp3Mob, cp3Home:S.cp3Home, cp3Addr:S.cp3Addr,
+    collectConfirm:S.collectConfirm, legalNotes:S.legalNotes,
+    gdpr1:S.gdpr1, gdpr2:S.gdpr2, sig1:S.sig1, sig2:S.sig2, subDate:S.subDate
+  }))));
+  var pdfLink = 'https://collooneyas.github.io/collooney-afterschool/?reg='+encoded;
+
   if (typeof emailjs !== 'undefined') {
     var params = {
       child_name: S.childName,
@@ -685,7 +726,7 @@ function submitForm() {
       cost_week: '\u20ac'+S.costWeek.toFixed(2),
       email: S.pg1Email,
       name: S.pg1Name,
-      message: summary,
+      message: summary + '\n\n=== VIEW FULL REGISTRATION PDF ===\n' + pdfLink,
       title: 'New Registration: '+S.childName
     };
     // Try v3 send first, fall back to v2
