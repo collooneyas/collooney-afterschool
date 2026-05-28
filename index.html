@@ -250,20 +250,15 @@ var S = {
 };
 
 // ── Check for registration data in URL (for Marie's email link) ──────────
+var REG_FROM_URL = false;
 (function() {
   var params = new URLSearchParams(window.location.search);
   var reg = params.get('reg');
   if (reg) {
     try {
       var data = JSON.parse(decodeURIComponent(escape(atob(reg))));
-      // Restore all state from URL data
       Object.keys(data).forEach(function(k) { if (k in S) S[k] = data[k]; });
-      // Show the PDF immediately
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          openPDF();
-        }, 500);
-      });
+      REG_FROM_URL = true;
     } catch(e) {
       console.error('Could not decode registration data:', e);
     }
@@ -733,7 +728,8 @@ function submitForm() {
       cost_week: '\u20ac'+S.costWeek.toFixed(2),
       email: S.pg1Email,
       name: S.pg1Name,
-      message: summary + '\n\n=== VIEW FULL REGISTRATION PDF ===\n' + pdfLink,
+      message: summary,
+      pdf_link: pdfLink,
       title: 'New Registration: '+S.childName
     };
     // Try v3 send first, fall back to v2
@@ -960,7 +956,27 @@ function showSuccess() {
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────
-render(S.pg || 1);
+if (REG_FROM_URL) {
+  // Marie clicked the email link - show PDF viewer page directly
+  renderProgress(7);
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('mainCard').innerHTML =
+    '<div class="card-hd" style="background:linear-gradient(135deg,#2d9e6b,#1a7a50)">'+
+    '<span class="card-hd-icon">📋</span>'+
+    '<div><h2>Registration Form — '+S.childName+'</h2>'+
+    '<p>Click below to view and print the full registration document</p></div></div>'+
+    '<div style="text-align:center;padding:32px 20px">'+
+    '<div style="font-size:3rem;margin-bottom:16px">📄</div>'+
+    '<p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px">'+S.childName+' — Registration Details</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:8px">Parent: '+S.pg1Name+' &nbsp;|&nbsp; Start: '+S.startDate+'</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:24px">Days: '+S.days.join(', ')+' &nbsp;|&nbsp; Weekly Cost: &euro;'+S.costWeek.toFixed(2)+'</p>'+
+    '<button class="pdf-btn" onclick="openPDF()" style="margin-bottom:10px">🖨 Open Full Registration Form</button><br>'+
+    '<button class="dl-btn" onclick="downloadPDF()">⬇ Download as File</button>'+
+    '<p style="color:var(--mid);font-size:0.73rem;margin-top:14px;line-height:1.6">The form includes all details and yellow signature boxes for signing at your meeting.</p>'+
+    '</div>';
+} else {
+  render(S.pg || 1);
+}
 </script>
 </body>
 </html>
