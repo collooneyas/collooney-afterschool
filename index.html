@@ -9,20 +9,8 @@
 <meta property="og:image" content="https://collooneyas.github.io/collooney-afterschool/CAS_Logo.jpeg">
 <meta property="og:url" content="https://collooneyas.github.io/collooney-afterschool/">
 <meta property="og:type" content="website">
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-<script>
-// Fallback CDN if primary fails
-window.addEventListener('load', function() {
-  if (typeof emailjs === 'undefined') {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-    s.onload = function() {
-      if (typeof emailjs !== 'undefined') emailjs.init('8GR6OTR5IEWWCwuHp');
-    };
-    document.head.appendChild(s);
-  }
-});
-</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -38,7 +26,7 @@ body{font-family:'Lato',sans-serif;background:linear-gradient(135deg,#e8f4fb 0%,
 .hdr img{width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);object-fit:cover;flex-shrink:0}
 .hdr-name h1{font-family:'Nunito',sans-serif;font-size:1.15rem;font-weight:800;color:white;line-height:1.1}
 .hdr-name p{font-size:0.68rem;color:rgba(255,255,255,0.55);margin-top:1px}
-.hdr-tag{margin-left:auto;font-family:'Nunito',sans-serif;font-size:0.7rem;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap}
+.hdr-tag{margin-left:auto;font-family:'Nunito',sans-serif;font-size:0.7rem;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;display:none}
 
 /* Progress */
 .prog{background:var(--navy);padding:10px 20px 14px}
@@ -88,7 +76,7 @@ body{font-family:'Lato',sans-serif;background:linear-gradient(135deg,#e8f4fb 0%,
 .field textarea{min-height:68px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-@media(max-width:500px){.row2,.row3{grid-template-columns:1fr}}
+@media(max-width:500px){.row2,.row3{grid-template-columns:1fr}}@media(min-width:600px){.hdr-tag{display:block}}
 
 /* Day buttons */
 .day-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
@@ -204,15 +192,8 @@ body{font-family:'Lato',sans-serif;background:linear-gradient(135deg,#e8f4fb 0%,
 // ── Init EmailJS ──────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
   if (typeof emailjs !== 'undefined') {
-    try {
-      // v3 API
-      emailjs.init({publicKey: '8GR6OTR5IEWWCwuHp'});
-    } catch(e) {
-      try {
-        // v2 API fallback
-        emailjs.init('8GR6OTR5IEWWCwuHp');
-      } catch(e2) {}
-    }
+    emailjs.init({publicKey: '8GR6OTR5IEWWCwuHp'});
+    console.log('EmailJS initialised successfully');
   }
 });
 
