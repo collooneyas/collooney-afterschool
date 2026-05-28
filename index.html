@@ -257,7 +257,14 @@ var REG_FROM_URL = false;
   if (reg) {
     try {
       var data = JSON.parse(decodeURIComponent(escape(atob(reg))));
-      Object.keys(data).forEach(function(k) { if (k in S) S[k] = data[k]; });
+      Object.keys(data).forEach(function(k) { 
+        if (k in S) S[k] = data[k]; 
+      });
+      // Ensure numeric fields are numbers not strings
+      S.costDay = parseFloat(S.costDay) || 0;
+      S.costWeek = parseFloat(S.costWeek) || 0;
+      S.rate = String(S.rate);
+      if (!Array.isArray(S.days)) S.days = [];
       REG_FROM_URL = true;
     } catch(e) {
       console.error('Could not decode registration data:', e);
