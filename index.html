@@ -859,6 +859,14 @@ function sigBox(title) {
     '</div></div>';
 }
 
+function showPDFInline() {
+  var html = buildPDF();
+  // Replace entire document content
+  document.open('text/html');
+  document.write(html);
+  document.close();
+}
+
 function buildPDF() {
   var permsRows = Object.keys(S.perms).map(function(k){
     return '<tr><td style="padding:4px 8px;font-size:10px">'+k+'</td><td style="padding:4px 8px;font-size:10px;text-align:center">'+S.perms[k]+'</td></tr>';
@@ -989,10 +997,25 @@ if (REG_FROM_URL) {
   // Marie clicked the email link - show PDF viewer page directly
   renderProgress(7);
   document.getElementById('progFill').style.width = '100%';
-  // Build PDF and redirect to it as a data URL
-  var pdfHTML = buildPDF();
-  var dataURL = 'data:text/html;charset=utf-8,' + encodeURIComponent(pdfHTML);
-  window.location.href = dataURL;
+  // Show a clean landing page - when button clicked replace entire page with PDF
+  renderProgress(7);
+  document.getElementById('progFill').style.width = '100%';
+  var daysStr = Array.isArray(S.days) ? S.days.join(', ') : '';
+  var costStr = parseFloat(S.costWeek||0).toFixed(2);
+  document.getElementById('mainCard').innerHTML =
+    '<div class="card-hd" style="background:linear-gradient(135deg,#2d9e6b,#1a7a50)">'+
+    '<span class="card-hd-icon">📋</span>'+
+    '<div><h2>Registration — '+S.childName+'</h2>'+
+    '<p>Click the button below to open the full registration form</p></div></div>'+
+    '<div style="text-align:center;padding:32px 20px">'+
+    '<div style="font-size:3rem;margin-bottom:12px">📄</div>'+
+    '<p style="font-size:0.95rem;font-weight:700;color:var(--navy);margin-bottom:6px">'+S.childName+'</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:4px">Parent: '+S.pg1Name+' &nbsp;|&nbsp; Start: '+S.startDate+'</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:24px">Days: '+daysStr+' &nbsp;|&nbsp; &euro;'+costStr+'/week</p>'+
+    '<button onclick="showPDFInline()" style="background:linear-gradient(135deg,#1A3560,#2E86AB);color:white;border:none;padding:16px 36px;border-radius:99px;font-family:Nunito,sans-serif;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(26,53,96,0.3)">'+
+    '🖨 Open Registration Form</button>'+
+    '<p style="color:var(--mid);font-size:0.73rem;margin-top:14px;line-height:1.6">Includes all details and signature boxes</p>'+
+    '</div>';
 } else {
   render(S.pg || 1);
 }
