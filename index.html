@@ -275,8 +275,10 @@ var REG_FROM_URL = false;
         aj:'collectConfirm', ak:'legalNotes',
         al:'gdpr1', am:'gdpr2', an:'sig1', ao:'sig2', ap:'subDate'
       };
+      // Handle both old format (full keys) and new format (short keys)
+      var hasShortKeys = 'a' in data;
       Object.keys(data).forEach(function(k) {
-        var fullKey = km[k] || k;
+        var fullKey = hasShortKeys ? (km[k] || k) : k;
         if (fullKey in S) S[fullKey] = data[k];
       });
       S.costDay = parseFloat(S.costDay) || 0;
@@ -983,16 +985,18 @@ if (REG_FROM_URL) {
   // Marie clicked the email link - show PDF viewer page directly
   renderProgress(7);
   document.getElementById('progFill').style.width = '100%';
+  var daysStr = Array.isArray(S.days) ? S.days.join(', ') : (S.days || '');
+  var costStr = S.costWeek ? parseFloat(S.costWeek).toFixed(2) : '0.00';
   document.getElementById('mainCard').innerHTML =
     '<div class="card-hd" style="background:linear-gradient(135deg,#2d9e6b,#1a7a50)">'+
     '<span class="card-hd-icon">📋</span>'+
-    '<div><h2>Registration Form — '+S.childName+'</h2>'+
+    '<div><h2>Registration — '+(S.childName||'Loading...')+'</h2>'+
     '<p>Click below to view and print the full registration document</p></div></div>'+
     '<div style="text-align:center;padding:32px 20px">'+
     '<div style="font-size:3rem;margin-bottom:16px">📄</div>'+
-    '<p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px">'+S.childName+' — Registration Details</p>'+
-    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:8px">Parent: '+S.pg1Name+' &nbsp;|&nbsp; Start: '+S.startDate+'</p>'+
-    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:24px">Days: '+S.days.join(', ')+' &nbsp;|&nbsp; Weekly Cost: &euro;'+S.costWeek.toFixed(2)+'</p>'+
+    '<p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px">'+(S.childName||'Registration')+'</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:8px">Parent: '+(S.pg1Name||'')+'&nbsp;|&nbsp;Start: '+(S.startDate||'')+'</p>'+
+    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:24px">Days: '+daysStr+'&nbsp;|&nbsp;Weekly Cost: &euro;'+costStr+'</p>'+
     '<button class="pdf-btn" onclick="openPDF()" style="margin-bottom:10px">🖨 Open Full Registration Form</button><br>'+
     '<button class="dl-btn" onclick="downloadPDF()">⬇ Download as File</button>'+
     '<p style="color:var(--mid);font-size:0.73rem;margin-top:14px;line-height:1.6">The form includes all details and yellow signature boxes for signing at your meeting.</p>'+
