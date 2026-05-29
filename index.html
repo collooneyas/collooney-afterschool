@@ -256,7 +256,9 @@ var REG_FROM_URL = false;
   var reg = params.get('reg');
   if (reg) {
     try {
-      var data = JSON.parse(decodeURIComponent(escape(atob(reg))));
+      var data = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(reg), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')));
       // Map short keys back to full state
       var km = {
         a:'childName', b:'childDob', c:'childAddr', d:'otherChildren',
