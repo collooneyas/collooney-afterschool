@@ -278,18 +278,22 @@ var REG_FROM_URL = false;
         aj:'collectConfirm', ak:'legalNotes',
         al:'gdpr1', am:'gdpr2', an:'sig1', ao:'sig2', ap:'subDate'
       };
-      // Handle both old format (full keys) and new format (short keys)
+      // Map ALL data into a clean object and store globally
       var hasShortKeys = 'a' in data;
+      var mapped = {};
       Object.keys(data).forEach(function(k) {
         var fullKey = hasShortKeys ? (km[k] || k) : k;
-        if (fullKey in S) S[fullKey] = data[k];
+        mapped[fullKey] = data[k];
       });
-      S.costDay = parseFloat(S.costDay) || 0;
-      S.costWeek = parseFloat(S.costWeek) || 0;
-      S.rate = String(S.rate);
-      if (!Array.isArray(S.days)) S.days = [];
-      if (typeof S.perms !== 'object' || Array.isArray(S.perms)) S.perms = {};
-      console.log('S populated - childName:', S.childName, 'pg1Name:', S.pg1Name, 'subDate:', S.subDate, 'costDay:', S.costDay);
+      mapped.costDay = parseFloat(mapped.costDay) || 0;
+      mapped.costWeek = parseFloat(mapped.costWeek) || 0;
+      mapped.rate = String(mapped.rate || '');
+      if (!Array.isArray(mapped.days)) mapped.days = [];
+      if (typeof mapped.perms !== 'object' || Array.isArray(mapped.perms)) mapped.perms = {};
+      // Store in both S and a global backup
+      Object.keys(mapped).forEach(function(k) { if (k in S) S[k] = mapped[k]; });
+      window.REG_DATA = mapped;
+      console.log('REG_DATA set:', mapped.childName, mapped.pg1Name, mapped.subDate);
       REG_FROM_URL = true;
     } catch(e) {
       console.error('Could not decode registration data:', e);
@@ -303,6 +307,8 @@ function saveLocal() {
 }
 function loadLocal() {
   try {
+    // Don't load from localStorage if we have URL registration data
+    if (REG_FROM_URL) return;
     var saved = localStorage.getItem('cas_reg');
     if (saved) { var d = JSON.parse(saved); Object.keys(d).forEach(function(k){ if(k in S) S[k]=d[k]; }); }
   } catch(e) {}
@@ -861,13 +867,27 @@ function sigBox(title) {
 
 function showPDFInline() {
   var html = buildPDF();
-  // Replace entire document content
-  document.open('text/html');
-  document.write(html);
-  document.close();
+  // Extract just body content from full HTML
+  var bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  var bodyContent = bodyMatch ? bodyMatch[1] : html;
+  // Extract and inject styles
+  var styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  var styles = styleMatch ? styleMatch[1] : '';
+  // Replace page
+  document.head.innerHTML = '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Registration - '+S.childName+'</title><style>'+styles+'</style>';
+  document.body.innerHTML = bodyContent;
 }
 
 function buildPDF() {
+  // Use REG_DATA from URL decode if available, otherwise use S
+  var D = (window.REG_DATA && window.REG_DATA.childName) ? window.REG_DATA : S;
+  var _S = S; S = D;  // temporarily swap
+  var result = buildPDFInner();
+  S = _S;  // restore
+  return result;
+}
+
+function buildPDFInner() {
   var permsRows = Object.keys(S.perms).map(function(k){
     return '<tr><td style="padding:4px 8px;font-size:10px">'+k+'</td><td style="padding:4px 8px;font-size:10px;text-align:center">'+S.perms[k]+'</td></tr>';
   }).join('');
