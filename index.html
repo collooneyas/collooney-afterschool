@@ -989,11 +989,10 @@ if (REG_FROM_URL) {
   // Marie clicked the email link - show PDF viewer page directly
   renderProgress(7);
   document.getElementById('progFill').style.width = '100%';
-  // Write PDF directly into the page - avoids all timing/blob issues
+  // Build PDF and redirect to it as a data URL
   var pdfHTML = buildPDF();
-  document.open();
-  document.write(pdfHTML);
-  document.close();
+  var dataURL = 'data:text/html;charset=utf-8,' + encodeURIComponent(pdfHTML);
+  window.location.href = dataURL;
 } else {
   render(S.pg || 1);
 }
