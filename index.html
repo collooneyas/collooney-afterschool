@@ -259,6 +259,7 @@ var REG_FROM_URL = false;
       var data = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(reg), function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join('')));
+      console.log('REG DATA DECODED - childName:', data.a, 'pg1Name:', data.k, 'subDate:', data.ap);
       // Map short keys back to full state
       var km = {
         a:'childName', b:'childDob', c:'childAddr', d:'otherChildren',
@@ -288,6 +289,7 @@ var REG_FROM_URL = false;
       S.rate = String(S.rate);
       if (!Array.isArray(S.days)) S.days = [];
       if (typeof S.perms !== 'object' || Array.isArray(S.perms)) S.perms = {};
+      console.log('S populated - childName:', S.childName, 'pg1Name:', S.pg1Name, 'subDate:', S.subDate, 'costDay:', S.costDay);
       REG_FROM_URL = true;
     } catch(e) {
       console.error('Could not decode registration data:', e);
@@ -987,22 +989,11 @@ if (REG_FROM_URL) {
   // Marie clicked the email link - show PDF viewer page directly
   renderProgress(7);
   document.getElementById('progFill').style.width = '100%';
-  var daysStr = Array.isArray(S.days) ? S.days.join(', ') : (S.days || '');
-  var costStr = S.costWeek ? parseFloat(S.costWeek).toFixed(2) : '0.00';
-  document.getElementById('mainCard').innerHTML =
-    '<div class="card-hd" style="background:linear-gradient(135deg,#2d9e6b,#1a7a50)">'+
-    '<span class="card-hd-icon">📋</span>'+
-    '<div><h2>Registration — '+(S.childName||'Loading...')+'</h2>'+
-    '<p>Click below to view and print the full registration document</p></div></div>'+
-    '<div style="text-align:center;padding:32px 20px">'+
-    '<div style="font-size:3rem;margin-bottom:16px">📄</div>'+
-    '<p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px">'+(S.childName||'Registration')+'</p>'+
-    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:8px">Parent: '+(S.pg1Name||'')+'&nbsp;|&nbsp;Start: '+(S.startDate||'')+'</p>'+
-    '<p style="color:var(--mid);font-size:0.83rem;margin-bottom:24px">Days: '+daysStr+'&nbsp;|&nbsp;Weekly Cost: &euro;'+costStr+'</p>'+
-    '<button class="pdf-btn" onclick="openPDF()" style="margin-bottom:10px">🖨 Open Full Registration Form</button><br>'+
-    '<button class="dl-btn" onclick="downloadPDF()">⬇ Download as File</button>'+
-    '<p style="color:var(--mid);font-size:0.73rem;margin-top:14px;line-height:1.6">The form includes all details and yellow signature boxes for signing at your meeting.</p>'+
-    '</div>';
+  // Write PDF directly into the page - avoids all timing/blob issues
+  var pdfHTML = buildPDF();
+  document.open();
+  document.write(pdfHTML);
+  document.close();
 } else {
   render(S.pg || 1);
 }
