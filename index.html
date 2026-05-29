@@ -257,14 +257,33 @@ var REG_FROM_URL = false;
   if (reg) {
     try {
       var data = JSON.parse(decodeURIComponent(escape(atob(reg))));
-      Object.keys(data).forEach(function(k) { 
-        if (k in S) S[k] = data[k]; 
+      // Map short keys back to full state
+      var km = {
+        a:'childName', b:'childDob', c:'childAddr', d:'otherChildren',
+        e:'cls', f:'days', g:'rate', h:'costDay', i:'costWeek', j:'startDate',
+        k:'pg1Name', l:'pg1Rel', m:'pg1Home', n:'pg1Work', o:'pg1Mob', p:'pg1Email', q:'pg1Addr',
+        r:'pg2Name', s:'pg2Rel', t:'pg2Home', u:'pg2Work', v:'pg2Mob', w:'pg2Email', x:'pg2Addr',
+        y:'ecName', z:'ecAddr', A:'ecHome', B:'ecWork', C:'ecMob',
+        D:'drName', E:'drTel', F:'drAddr', G:'medHistory',
+        H:'allergyYn', I:'allergyWhat', J:'allergyReaction', K:'allergyAction',
+        L:'allergyMed', M:'allergyControl', N:'allergyOther',
+        O:'medChildName', P:'medConsent', Q:'febrileAllergy', R:'febrileConsent',
+        S2:'perms',
+        T2:'collectChild', U:'cp1Name', V:'cp1Rel', W:'cp1Mob', X:'cp1Home', Y:'cp1Addr',
+        Z:'cp2Name', aa:'cp2Rel', ab:'cp2Mob', ac:'cp2Home', ad:'cp2Addr',
+        ae:'cp3Name', af:'cp3Rel', ag:'cp3Mob', ah:'cp3Home', ai:'cp3Addr',
+        aj:'collectConfirm', ak:'legalNotes',
+        al:'gdpr1', am:'gdpr2', an:'sig1', ao:'sig2', ap:'subDate'
+      };
+      Object.keys(data).forEach(function(k) {
+        var fullKey = km[k] || k;
+        if (fullKey in S) S[fullKey] = data[k];
       });
-      // Ensure numeric fields are numbers not strings
       S.costDay = parseFloat(S.costDay) || 0;
       S.costWeek = parseFloat(S.costWeek) || 0;
       S.rate = String(S.rate);
       if (!Array.isArray(S.days)) S.days = [];
+      if (typeof S.perms !== 'object' || Array.isArray(S.perms)) S.perms = {};
       REG_FROM_URL = true;
     } catch(e) {
       console.error('Could not decode registration data:', e);
@@ -706,24 +725,25 @@ function submitForm() {
   var summary = buildSummary();
   logToSheet();
 
-  // Build a data URL that encodes all form data so Marie can open the PDF
-  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify({
-    childName:S.childName, childDob:S.childDob, childAddr:S.childAddr, otherChildren:S.otherChildren,
-    cls:S.cls, days:S.days, rate:S.rate, costDay:S.costDay, costWeek:S.costWeek, startDate:S.startDate,
-    pg1Name:S.pg1Name, pg1Rel:S.pg1Rel, pg1Home:S.pg1Home, pg1Work:S.pg1Work, pg1Mob:S.pg1Mob, pg1Email:S.pg1Email, pg1Addr:S.pg1Addr,
-    pg2Name:S.pg2Name, pg2Rel:S.pg2Rel, pg2Home:S.pg2Home, pg2Work:S.pg2Work, pg2Mob:S.pg2Mob, pg2Email:S.pg2Email, pg2Addr:S.pg2Addr,
-    ecName:S.ecName, ecAddr:S.ecAddr, ecHome:S.ecHome, ecWork:S.ecWork, ecMob:S.ecMob,
-    drName:S.drName, drTel:S.drTel, drAddr:S.drAddr, medHistory:S.medHistory,
-    allergyYn:S.allergyYn, allergyWhat:S.allergyWhat, allergyReaction:S.allergyReaction, allergyAction:S.allergyAction,
-    allergyMed:S.allergyMed, allergyControl:S.allergyControl, allergyOther:S.allergyOther,
-    medChildName:S.medChildName, medConsent:S.medConsent, febrileAllergy:S.febrileAllergy, febrileConsent:S.febrileConsent,
-    perms:S.perms,
-    collectChild:S.collectChild, cp1Name:S.cp1Name, cp1Rel:S.cp1Rel, cp1Mob:S.cp1Mob, cp1Home:S.cp1Home, cp1Addr:S.cp1Addr,
-    cp2Name:S.cp2Name, cp2Rel:S.cp2Rel, cp2Mob:S.cp2Mob, cp2Home:S.cp2Home, cp2Addr:S.cp2Addr,
-    cp3Name:S.cp3Name, cp3Rel:S.cp3Rel, cp3Mob:S.cp3Mob, cp3Home:S.cp3Home, cp3Addr:S.cp3Addr,
-    collectConfirm:S.collectConfirm, legalNotes:S.legalNotes,
-    gdpr1:S.gdpr1, gdpr2:S.gdpr2, sig1:S.sig1, sig2:S.sig2, subDate:S.subDate
-  }))));
+  // Compress data using short keys to keep URL short enough for email clients
+  var d = {
+    a:S.childName, b:S.childDob, c:S.childAddr, d:S.otherChildren,
+    e:S.cls, f:S.days, g:S.rate, h:S.costDay, i:S.costWeek, j:S.startDate,
+    k:S.pg1Name, l:S.pg1Rel, m:S.pg1Home, n:S.pg1Work, o:S.pg1Mob, p:S.pg1Email, q:S.pg1Addr,
+    r:S.pg2Name, s:S.pg2Rel, t:S.pg2Home, u:S.pg2Work, v:S.pg2Mob, w:S.pg2Email, x:S.pg2Addr,
+    y:S.ecName, z:S.ecAddr, A:S.ecHome, B:S.ecWork, C:S.ecMob,
+    D:S.drName, E:S.drTel, F:S.drAddr, G:S.medHistory,
+    H:S.allergyYn, I:S.allergyWhat, J:S.allergyReaction, K:S.allergyAction,
+    L:S.allergyMed, M:S.allergyControl, N:S.allergyOther,
+    O:S.medChildName, P:S.medConsent, Q:S.febrileAllergy, R:S.febrileConsent,
+    S2:S.perms,
+    T2:S.collectChild, U:S.cp1Name, V:S.cp1Rel, W:S.cp1Mob, X:S.cp1Home, Y:S.cp1Addr,
+    Z:S.cp2Name, aa:S.cp2Rel, ab:S.cp2Mob, ac:S.cp2Home, ad:S.cp2Addr,
+    ae:S.cp3Name, af:S.cp3Rel, ag:S.cp3Mob, ah:S.cp3Home, ai:S.cp3Addr,
+    aj:S.collectConfirm, ak:S.legalNotes,
+    al:S.gdpr1, am:S.gdpr2, an:S.sig1, ao:S.sig2, ap:S.subDate
+  };
+  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
   var pdfLink = 'https://collooneyas.github.io/collooney-afterschool/?reg='+encoded;
 
   if (typeof emailjs !== 'undefined') {
@@ -813,14 +833,24 @@ function buildSummary() {
 }
 
 // ── PDF ───────────────────────────────────────────────────────────────────
-function sigBox(title, sigs) {
-  var lines = sigs.map(function(s){
-    return '<div><div style="border-bottom:2px solid #1A3560;height:32px;margin:6px 0 2px"></div><div style="font-size:9px;color:#888">'+s+'</div></div>';
-  }).join('');
-  var cols = sigs.length > 1 ? 'grid-template-columns:repeat('+Math.min(sigs.length,2)+',1fr)' : '';
-  return '<div style="background:#FFF9C4;border:2px solid #F9A825;border-radius:7px;padding:13px;margin:10px 0">'+
-    '<strong style="font-size:11px">'+title+'</strong>'+
-    '<div style="display:grid;'+cols+';gap:14px;margin-top:6px">'+lines+'</div></div>';
+function sigBox(title) {
+  // Format submission date nicely
+  var d = S.subDate || '';
+  var dateStr = '';
+  if (d) {
+    var parts = d.split('-');
+    if (parts.length === 3) dateStr = parts[2]+'/'+parts[1]+'/'+parts[0];
+  }
+  return '<div style="background:#FFF9C4;border:2px solid #F9A825;border-radius:7px;padding:14px;margin:10px 0">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+    '<strong style="font-size:11px;color:#1A3560">&#9733; '+title+'</strong>'+
+    (dateStr ? '<span style="font-size:10px;color:#856404">Date of Submission: <strong>'+dateStr+'</strong></span>' : '')+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">'+
+    '<div><div style="border-bottom:2px solid #1A3560;height:32px;margin-bottom:3px"></div><div style="font-size:8.5px;color:#666">Parent / Guardian 1 Signature *</div></div>'+
+    '<div><div style="border-bottom:2px solid #1A3560;height:32px;margin-bottom:3px"></div><div style="font-size:8.5px;color:#666">Parent / Guardian 2 Signature</div></div>'+
+    '<div><div style="border-bottom:2px solid #1A3560;height:32px;margin-bottom:3px"></div><div style="font-size:8.5px;color:#666">Service Manager Signature *</div></div>'+
+    '</div></div>';
 }
 
 function buildPDF() {
@@ -856,7 +886,7 @@ function buildPDF() {
 
     sec('Emergency Contact')+
     tbl(row('Name',S.ecName)+row('Address',S.ecAddr)+row('Mobile',S.ecMob)+row('Home Tel',S.ecHome)+row('Work Tel',S.ecWork))+
-    sigBox('Emergency Contact Confirmation',['Parent / Guardian Signature *','Date'])+
+    sigBox('Emergency Contact Confirmation')+
 
     sec('Family Doctor & Medical')+
     tbl(row('Doctor',S.drName)+row('Tel',S.drTel)+row('Surgery',S.drAddr)+row('Medical History',S.medHistory))+
@@ -868,28 +898,19 @@ function buildPDF() {
     sec('Agreement for Medical Treatment')+
     '<p style="font-size:9px;font-style:italic;margin:4px 0 6px">I hereby give consent to my child receiving medical treatment if a doctor thinks it is required as an emergency and I cannot be contacted. An ambulance will be called and the parent contacted.</p>'+
     tbl(row('Child\'s Name',S.medChildName)+row('Consent Given',(S.medConsent?'YES':'NO')))+
-    sigBox('Medical Treatment Signatures',[
-      'Parent / Guardian 1 Signature *','Date',
-      'Parent / Guardian 2 Signature','Date',
-      'Witnessed by Service Manager *','Date'])+
+    sigBox('Medical Treatment Consent')+
 
     sec('Agreement for Anti-Febrile Medication')+
     '<p style="font-size:9px;font-style:italic;margin:4px 0 6px">The service will only administer Calpol or Nurofen if a child has a temperature of 38°C or over. The parent will be contacted before any medication is administered.</p>'+
     tbl(row('Allergy to Anti-Febrile',S.febrileAllergy)+row('Consent Given',S.febrileConsent))+
-    sigBox('Anti-Febrile Medication Signatures',[
-      'Parent / Guardian 1 Signature *','Date',
-      'Parent / Guardian 2 Signature','Date',
-      'Witnessed by Service Manager *','Date'])+
+    sigBox('Anti-Febrile Medication Consent')+
 
     sec('Permissions')+
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px">'+
     '<thead><tr><th style="text-align:left;background:#1A3560;color:white;padding:5px 8px;font-size:10px">Permission</th>'+
     '<th style="background:#1A3560;color:white;padding:5px 8px;font-size:10px">Response</th></tr></thead>'+
     '<tbody>'+permsRows+'</tbody></table>'+
-    sigBox('Permissions Signatures',[
-      'Parent / Guardian 1 Signature *','Date',
-      'Parent / Guardian 2 Signature','Date',
-      'Witnessed by Service Manager *','Date'])+
+    sigBox('Permissions')+
 
     sec('Collection Authorisation')+
     '<p style="font-size:9px;font-style:italic;margin:4px 0 6px">I authorise the following people to collect my child in my absence. Unless I have spoken to the Manager, my child cannot be collected by any other person.</p>'+
@@ -898,9 +919,7 @@ function buildPDF() {
       row('Address 1',S.cp1Addr)+
       (S.cp2Name?row('Person 2',S.cp2Name+' ('+S.cp2Rel+') — Mob: '+S.cp2Mob)+row('Address 2',S.cp2Addr):'')+
       (S.cp3Name?row('Person 3',S.cp3Name+' ('+S.cp3Rel+') — Mob: '+S.cp3Mob)+row('Address 3',S.cp3Addr):''))+
-    sigBox('Collection Authorisation Signatures',[
-      'Parent / Guardian Signature *','Date',
-      'Witnessed by Service Manager *','Date'])+
+    sigBox('Collection Authorisation')+
 
     sec('Legal Information')+
     tbl(row('Legal / Custody Notes',S.legalNotes))+
@@ -908,10 +927,7 @@ function buildPDF() {
     sec('Data Privacy & Declaration')+
     tbl(row('GDPR Consent PG1',(S.gdpr1?'Consent given':''))+row('GDPR Consent PG2',S.gdpr2)+
       row('Digital Signature PG1',S.sig1)+row('Digital Signature PG2',S.sig2)+row('Date',S.subDate))+
-    sigBox('Data Privacy & Registration Consent Signatures',[
-      'Parent / Guardian 1 Signature *','Date',
-      'Parent / Guardian 2 Signature','Date',
-      'Manager / Designated Person *','Date'])+
+    sigBox('Data Privacy & Declaration')+
 
     '<div class="noprint" style="margin-top:24px;text-align:center">'+
     '<button onclick="window.print()" style="background:#1A3560;color:white;border:none;padding:12px 28px;border-radius:99px;font-size:13px;font-weight:bold;cursor:pointer;margin:4px">🖨 Print / Save as PDF</button>'+
